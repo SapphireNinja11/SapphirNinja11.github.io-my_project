@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ClubConnect — Accessible Club Matcher</title>
+  <style>
+    :root{
+      --bg:#ffffff; --fg:#111111; --accent:#1e88e5; --card:#f5f7fb;
+      --radius:12px; --pad:16px; font-family:Inter, system-ui, Arial, sans-serif;
+    }
+    [data-theme="dark"]{ --bg:#0b0b0c; --fg:#ececec; --accent:#90caf9; --card:#121214; }
+    [data-contrast="high"]{ --bg:#000; --fg:#fff; --accent:#ffd54f; }
+    html,body{height:100%; margin:0; background:var(--bg); color:var(--fg);} 
+    .container{max-width:980px; margin:28px auto; padding:18px;}
+    header{display:flex; align-items:center; gap:12px;}
+    h1{margin:0; font-size:1.6rem}
+    p.lead{margin:6px 0 18px; opacity:0.9}
+
+    .controls{display:flex; gap:8px; margin-left:auto; align-items:center}
+    button, .chip{background:var(--accent); color:var(--bg); border:none; padding:8px 12px; border-radius:10px; cursor:pointer}
+    .chip{display:inline-flex; align-items:center; gap:8px}
+
+    main{display:grid; grid-template-columns: 1fr 380px; gap:18px; align-items:start;}
+    @media (max-width:900px){main{grid-template-columns:1fr}}
+
+    .card{background:var(--card); padding:var(--pad); border-radius:var(--radius); box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+
+    form label{display:block; font-weight:600; margin-bottom:6px}
+    input[type=text], select, textarea{width:100%; padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.12); box-sizing:border-box}
+    textarea{min-height:110px}
+
+    .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .tag{padding:6px 10px; border-radius:999px; background:rgba(0,0,0,0.06); cursor:pointer}
+    .tag[aria-pressed="true"]{background:var(--accent); color:var(--bg)}
+
+    .results{display:flex; flex-direction:column; gap:12px}
+    .club{display:flex; gap:12px; align-items:center;}
+    .club .meta{flex:1}
+    .club h3{margin:0}
+    small{opacity:0.8}
+
+    footer{margin-top:18px; text-align:center; opacity:0.8}
+
+    /* Large focus outlines for keyboard users */
+    :focus{outline:4px solid #ffd54f; outline-offset:2px}
+
+    .sr-only{position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden}
+  </style>
+</head>
+<body data-theme="light" data-contrast="normal">
+  <a class="sr-only" href="#maincontent">Skip to main content</a>
+  <div class="container">
+    <header>
+      <div>
+        <h1>ClubConnect</h1>
+        <p class="lead">Enter interests and accessibility preferences — we suggest clubs and ways to join. Built for partially blind users with keyboard + screen-reader friendly UI.</p>
+      </div>
+
+      <div class="controls" role="toolbar" aria-label="Accessibility controls">
+        <label for="textSize" class="sr-only">Text size</label>
+        <select id="textSize" aria-label="Text size" title="Change text size">
+          <option value="16">Default</option>
+          <option value="18">Large</option>
+          <option value="22">Larger</option>
+        </select>
+        <button id="contrastToggle" title="Toggle high contrast">High Contrast</button>
+        <button id="themeToggle" title="Toggle dark theme">Dark</button>
+        <button id="voiceBtn" aria-pressed="false">🔊 Speak</button>
+      </div>
+    </header>
+
+    <main id="maincontent">
+      <section class="card" aria-label="Interest form">
+        <h2>Tell us about yourself</h2>
+        <form id="interestForm">
+          <label for="name">Name</label>
+          <input type="text" id="name" placeholder="Your name" aria-required="true" />
+
+          <label for="age">Age (optional)</label>
+          <input type="text" id="age" placeholder="e.g. 28" />
+
+          <label for="interests">Interests (add multiple)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="interestInput" placeholder="Type an interest and press Add" aria-describedby="interestHelp" />
+            <button type="button" id="addInterest">Add</button>
+          </div>
+          <div id="interestHelp" class="sr-only">Examples: music, cricket, chess, public-speaking, gardening, cooking, tech</div>
+          <div class="tags" id="tags" aria-live="polite"></div>
+
+          <label>Accessibility & preferences</label>
+          <div>
+            <label><input type="checkbox" id="prefInPerson" /> Prefer in-person</label><br>
+            <label><input type="checkbox" id="prefOnline" /> Prefer online</label><br>
+            <label><input type="checkbox" id="prefLowVision" checked /> Low vision friendly (audio or tactile options)</label>
+          </div>
+
+          <label for="notes">Notes (communication preferences, support needed)</label>
+          <textarea id="notes" placeholder="E.g., I prefer audio descriptions, larger text, or a friend to accompany me."></textarea>
+
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button type="button" id="matchBtn">Find Clubs</button>
+            <button type="button" id="saveBtn">Save Profile</button>
+            <button type="reset">Reset</button>
+          </div>
+        </form>
+
+        <hr />
+        <div aria-live="polite" id="messageArea"></div>
+      </section>
+
+      <aside class="card" aria-label="Matches and suggestions">
+        <h2>Recommended Clubs</h2>
+        <div id="results" class="results" aria-live="polite">
+          <p>Enter interests and press "Find Clubs" to see suggestions.</p>
+        </div>
+
+        <hr />
+        <h3>Quick examples</h3>
+        <div>
+          <button class="chip" data-sample="music">Music lover</button>
+          <button class="chip" data-sample="sports">Sports fan</button>
+          <button class="chip" data-sample="reading">Book reader</button>
+          <button class="chip" data-sample="coding">Coding</button>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <small>Made with accessibility in mind — works offline in your browser. <strong>Tip:</strong> Use keyboard (Tab) and voice features.</small>
+    </footer>
+  </div>
+
+  <script>
+    // Simple in-memory club database
+    const CLUBS = [
+      {id:1, name:'Audio Book Club', tags:['reading','audio','books'], mode:'online', desc:'Listen & discuss audiobooks, weekly sessions with audio summaries.'},
+      {id:2, name:'Adaptive Sports Group', tags:['sports','fitness','cricket','football'], mode:'in-person', desc:'Accessible sports coaching and social play.'},
+      {id:3, name:'Cooking Together', tags:['cooking','food','social'], mode:'in-person', desc:'Hands-on cooking sessions with tactile instructions.'},
+      {id:4, name:'Music & Rhythm', tags:['music','singing','instruments'], mode:'both', desc:'Group singing and rhythm workshops; audio-first teaching.'},
+      {id:5, name:'Tech Buddies', tags:['coding','tech','gadgets'], mode:'online', desc:'Pair-programming and accessible tech help.'},
+      {id:6, name:'Public Speaking Practice', tags:['public-speaking','debate'], mode:'both', desc:'Practice talks with supportive feedback and audio transcriptions.'},
+      {id:7, name:'Gardening Angels', tags:['gardening','nature','social'], mode:'in-person', desc:'Community gardening with tactile markers and guided tours.'},
+      {id:8, name:'Chess & Strategy', tags:['chess','games','strategy'], mode:'both', desc:'Audio-described chess matches and lessons.'}
+    ];
+
+    // Elements
+    const interestInput = document.getElementById('interestInput');
+    const addInterestBtn = document.getElementById('addInterest');
+    const tagsDiv = document.getElementById('tags');
+    const matchBtn = document.getElementById('matchBtn');
+    const resultsDiv = document.getElementById('results');
+    const messageArea = document.getElementById('messageArea');
+    const saveBtn = document.getElementById('saveBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const contrastToggle = document.getElementById('contrastToggle');
+    const themeToggle = document.getElementById('themeToggle');
+    const textSize = document.getElementById('textSize');
+
+    // State
+    let interests = [];
+    let speaking = false;
+
+    function renderTags(){
+      tagsDiv.innerHTML = '';
+      interests.forEach((t,i)=>{
+        const b = document.createElement('button');
+        b.className = 'tag';
+        b.textContent = t;
+        b.setAttribute('aria-pressed','false');
+        b.onclick = ()=>{ interests.splice(i,1); renderTags(); };
+        b.title = 'Remove ' + t;
+        tagsDiv.appendChild(b);
+      })
+      if(interests.length===0){
+        const hint = document.createElement('div'); hint.textContent = 'No interests yet — try adding "music", "reading", "coding"...'; hint.style.opacity=0.8; tagsDiv.appendChild(hint);
+      }
+    }
+
+    addInterestBtn.addEventListener('click', ()=>{
+      const v = interestInput.value.trim().toLowerCase();
+      if(!v) return; if(!interests.includes(v)) interests.push(v);
+      interestInput.value=''; renderTags(); interestInput.focus();
+    });
+
+    // allow Enter to add interest
+    interestInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addInterestBtn.click(); } });
+
+    function matchClubs({prefs={}}){
+      // Scoring: number of matching tags + preference bonus
+      const scored = CLUBS.map(c=>{
+        let score = 0;
+        for(const t of interests){ if(c.tags.includes(t)) score += 2; }
+        // fuzzy: if interest is contained in tag words
+        for(const t of interests){ for(const tag of c.tags){ if(tag.includes(t) || t.includes(tag)) score += 0.5; }}
+        if(prefs.prefOnline && c.mode==='online') score += 1;
+        if(prefs.prefInPerson && c.mode==='in-person') score += 1;
+        if(prefs.prefLowVision && (c.desc.toLowerCase().includes('audio')||c.tags.includes('audio'))) score += 1.5;
+        return {...c, score};
+      }).filter(c=>c.score>0).sort((a,b)=>b.score-a.score);
+      return scored;
+    }
+
+    matchBtn.addEventListener('click', ()=>{
+      const prefs = { prefOnline:document.getElementById('prefOnline').checked, prefInPerson:document.getElementById('prefInPerson').checked, prefLowVision:document.getElementById('prefLowVision').checked };
+      if(interests.length===0){ announce('Please add at least one interest.'); resultsDiv.innerHTML='<p role="status">No interests provided.</p>'; return; }
+      const matches = matchClubs({prefs});
+      if(matches.length===0){ resultsDiv.innerHTML='<p>No matches found — try broader interests.</p>'; announce('No matches found. Try broader interests.'); return; }
+      resultsDiv.innerHTML='';
+      matches.forEach(m=>{
+        const el = document.createElement('div'); el.className='club card'; el.tabIndex=0; el.setAttribute('role','group');
+        el.innerHTML = <div class="meta"><h3>${escapeHtml(m.name)}</h3><small>${escapeHtml(m.desc)}</small><div><strong>Mode:</strong> ${escapeHtml(m.mode)}   <strong>Score:</strong> ${m.score.toFixed(1)}</div></div>;
+        const join = document.createElement('button'); join.textContent='Request to Join'; join.onclick = ()=>{ handleJoin(m); };
+        el.appendChild(join);
+        resultsDiv.appendChild(el);
+      });
+      announce(${matches.length} clubs matched. First result: ${matches[0].name});
+      // speak first recommendation if voice enabled
+      if(voiceBtn.getAttribute('aria-pressed')==='true'){ speak(I recommend ${matches[0].name}. ${matches[0].desc}); }
+    });
+function handleJoin(club){
+      // Simulate join request — store in localStorage and show message
+      const name = document.getElementById('name').value || 'Guest';
+      const note = document.getElementById('notes').value || '';
+      const payload = {user:name, club:club.name, time:new Date().toISOString(), note, interests};
+      // Save to localStorage as sentRequests
+      const existing = JSON.parse(localStorage.getItem('sentRequests')||'[]'); existing.push(payload); localStorage.setItem('sentRequests', JSON.stringify(existing));
+      messageArea.innerHTML = <div role="status">Request sent to <strong>${escapeHtml(club.name)}</strong>. We'll keep it in your requests.</div>;
+      announce(Request sent to ${club.name});
+    }
+
+    saveBtn.addEventListener('click', ()=>{
+      const profile = {name:document.getElementById('name').value||'Guest', age:document.getElementById('age').value||'', interests, notes:document.getElementById('notes').value||''};
+      localStorage.setItem('clubconnect_profile', JSON.stringify(profile)); messageArea.innerHTML = '<div role="status">Profile saved locally in your browser.</div>';
+      announce('Profile saved locally.');
+    });
+
+    // Quick sample chips
+    document.querySelectorAll('.chip').forEach(b=>{ b.addEventListener('click', ()=>{ const s = b.dataset.sample; interests = [s]; renderTags(); matchBtn.click(); }); });
+
+    // Accessibility controls
+    contrastToggle.addEventListener('click', ()=>{
+      const body = document.body; const current = body.getAttribute('data-contrast');
+      body.setAttribute('data-contrast', current==='high' ? 'normal' : 'high');
+    });
+    themeToggle.addEventListener('click', ()=>{ const body = document.body; body.setAttribute('data-theme', body.getAttribute('data-theme')==='light' ? 'dark' : 'light'); });
+    textSize.addEventListener('change', ()=>{ document.documentElement.style.fontSize = textSize.value + 'px'; });
+
+    // Voice support toggle
+    voiceBtn.addEventListener('click', ()=>{
+      const p = voiceBtn.getAttribute('aria-pressed')==='true'; voiceBtn.setAttribute('aria-pressed', (!p).toString()); voiceBtn.textContent = p? '🔊 Speak' : '🔈 Speaking';
+    });
+
+    function speak(text){
+      if(!('speechSynthesis' in window)) return; const u = new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    }
+    function announce(msg){
+      // polite message for screen readers
+      const sr = document.createElement('div'); sr.className='sr-only'; sr.textContent = msg; document.body.appendChild(sr); setTimeout(()=>sr.remove(),1500);
+    }
+
+    // small utility
+    function escapeHtml(s){ return String(s).replace(/[&<>\"]/g, ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;' }[ch]||ch)); }
+
+    // load saved profile on start
+    (function(){ const p = JSON.parse(localStorage.getItem('clubconnect_profile')||'null'); if(p){ document.getElementById('name').value=p.name||''; document.getElementById('age').value=p.age||''; document.getElementById('notes').value=p.notes||''; interests = p.interests||[]; renderTags(); } else renderTags(); })();
+
+    // keyboard nicety: press / to focus interests
+    document.addEventListener('keydown', (e)=>{ if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){ e.preventDefault(); interestInput.focus(); } });
+  </script>
+</body>
+</html>
